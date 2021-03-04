@@ -1,4 +1,5 @@
 
+import sys
 import requests
 import csv
 import re
@@ -17,7 +18,7 @@ GET_DEPARTMENTS_URL = 'https://ssb1.ccsf.edu:8105/StudentRegistrationSsb/ssb/cla
 SEARCH_CLASSES = 'https://ssb1.ccsf.edu:8105/StudentRegistrationSsb/ssb/searchResults/searchResults?'#txt_subject=%s&txt_term=%s&startDatepicker=&endDatepicker=&uniqueSessionId=lomf11613113652936&pageOffset=0&pageMaxSize=10&sortColumn=subjectDescription&sortDirection=asc'
 RESET_URL = 'https://ssb1.ccsf.edu:8105/StudentRegistrationSsb/ssb/classSearch/resetDataForm'
 
-YEARS_TO_FETCH = 10*3
+YEARS_TO_FETCH = 22*6 #3 semesters a year, C and NC
 MAX_SEARCH_RESULTS = 100
 
 
@@ -72,6 +73,7 @@ def get_data():
 		'max': YEARS_TO_FETCH
 		})
 
+	print('fetched %s semesters' % len(semesters))
 	for term in semesters:
 		term_name = term['description']
 		classes = {}
@@ -108,24 +110,28 @@ def get_data():
 	return column_keys, data
 	
 
-def write_csv(column_keys, data):
-	print('Writing csv file')
-	csv_file = "class.csv"
+def write_csv(column_keys, data, csv_file_name):
+	print('Writing csv file: %s' % csv_file_name)
 	try:
-		with open('../data/' + csv_file, 'w') as file:
+		with open('../data/' + csv_file_name, 'w') as file:
 			writer = csv.DictWriter(file, fieldnames=column_keys)
 			writer.writeheader()
 			for term, class_data in data.items():
 				print('writing data for %s' % term)
-				writer.writerow(class_data)
-			
+				#nulls as 0s in future?
+				writer.writerow(class_data)	
 				
-	except IOError:
-		print('aah')
+	except IOError as e:
+		print("writing error: %s" % e)
 
 def main():
+	args = sys.argv[1:]
+	if len(args) == 1:
+		csv_file_name = args[0]
+	else:
+		csv_file_name = 'class_data.csv'
 	column_keys, data = get_data()
-	write_csv(column_keys, data)
+	write_csv(column_keys, data, csv_file_name)
 
 if __name__ == "__main__":
 	main()
